@@ -1,4 +1,4 @@
-# Hash-Hack V2.0
+# HashHack V2.0
 暴力叉Hash
 ### 使用说明
 模数在 10<sup>14</sup> 范围内基本可以通过生日攻击叉掉
