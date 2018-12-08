@@ -2,10 +2,8 @@
 #include<cstdio>
 #include<cstring>
 #include<algorithm>
-#include<map>
-#include<string>
 #include<unordered_map>
-#define ull unsigned long long
+#define ull int
 using namespace std;
 inline int read(){
 	int x=0,f=1;char ch;
@@ -14,83 +12,110 @@ inline int read(){
 	return x*f;
 }
 const int N=100;
-unordered_map<int,int> tip;
-unordered_map<ull,int> tip2;
 char c[N],tmp[N];
-int nowlen,flag;
-const int Base1=187,MOD1=122420729;
-long long Pow[N];
-inline int getHash(int l,int r){
-	if (l==r) return c[l];
-	int mid=(l+r)>>1;
-	int ans=(getHash(l,mid)+getHash(mid+1,r)*Pow[mid-l+1])%MOD1;
-	return ans;
-}
-inline ull getHash2(){
-	ull ans=0;
-	for (int i=1;i<=nowlen;++i){
-		ans=ans*31+c[i];
+const int LH=1e6+7,S1=16,S2=10,MS2=(1<<S2)-1;
+struct Node{
+	int nxt;
+	unsigned long long v;
+};
+struct DATA{
+	Node*data[S1];
+	int now,used[S1];
+	DATA(){now=0,memset(used,0,sizeof(used));}
+	inline Node&operator[](long long x){
+		int x1=x>>S2,x2=x&MS2;
+		if (!used[x1]){
+			data[x1]=new Node[MS2+1];
+			used[x1]=1;
+			cerr<<"Enlarge "<<x1<<endl;
+		}
+		return data[x1][x2];
 	}
-	return ans;
+};
+struct Hash{
+	DATA T;
+	long long lt;
+	int last[LH];
+	Hash(){lt=0,memset(last,0,sizeof(last));}
+//	inline bool count(unsigned long long x){
+//		int ha=x%LH;
+//		for (long long i=last[ha];i;i=T[i].nxt){
+//			if (T[i].v==x) return 1;
+//		}
+//		return 0;
+//	}
+	inline long long insert(unsigned long long x){
+		int ha=x%LH,*lst=&last[ha];
+		for (long long i=*lst;i;lst=&T[i].nxt,i=*lst){
+			if (T[i].v==x) return i;
+		}
+		*lst=++lt;
+		T[lt].v=x,T[lt].nxt=0;
+	}
+};
+const int Hstd=2,Huser=1;
+Hash stdh[Hstd],userh[Huser];
+long long smod[Hstd]={1000000007,1000000003};
+long long umod[Huser]={998244353};
+long long sbas[Hstd]={31,131};
+long long ubas[Huser]={107};
+inline bool std_gethash(int l,int r){
+	for (int i=0;i<Hstd;++i){
+		long long ans=0;
+		for (int j=l;j<=r;++j){
+			ans=(sbas[i]*ans+c[j])%smod[i];
+		}
+		long long tip=stdh[i].insert(ans);
+		if (tip) return tip;
+	}
+	return 0;
 }
-int lt;
-const int M=26;
+inline bool user_gethash(int l,int r){
+	for (int i=0;i<Huser;++i){
+		long long ans=0;
+		for (int j=l;j<=r;++j){
+			ans=(ubas[i]*ans+c[j])%umod[i];
+		}
+		long long tip=userh[i].insert(ans);
+		if (tip) return tip;
+	}
+	return 0;
+}
+const int nowlen=20;
+const int M=10+26;
 char ch[M];
-//const int FL=1000000;
-//char ftmp[FL][N];
 int main(){
 	srand((unsigned long long)new char);
 	srand(rand()*rand());
-	Pow[0]=1;
-	for (int i=1;i<N;++i) Pow[i]=Pow[i-1]*Base1%MOD1;
-	for (int i=0;i<26;++i) ch[i]='a'+i;
+	for (int i=0;i<10;++i) ch[i]='0'+i;
+	for (int i=0;i<26;++i) ch[10+i]='a'+i;
 	freopen("tmp","w",stdout);
-	nowlen=7;
-	string ttt;
+	int cnt=0;
+	long long flag;
 	while (!flag){
-	//	ttt.clear();
-		for (int i=1;i<=nowlen;++i) c[i]=ch[rand()%M];//,ttt.push_back(c[i]);
-		ull h=getHash(1,nowlen),h2=getHash2();
-		++lt;
-		if (tip.count(h)&&!tip2.count(h2)){
-//			fclose(stdout);
-			flag=tip[h];
-//			freopen("tmp","r",stdin);
-//			for (int i=1;i<=flag;++i) scanf("%s",tmp);
-//			fclose(stdin);
-//			freopen("tmp","a",stdout);
-//			if (strcmp(tmp,c+1)==0) flag=0;
-//			if (flag)
+		++cnt;
+		for (int i=1;i<=nowlen;++i) c[i]=ch[rand()%M];
+		long long fstd=std_gethash(1,nowlen),fuser=user_gethash(1,nowlen);
+		if (!fstd&&fuser){
+			flag=fuser;
 			break;
 		}
-		tip[h]=lt;
-		tip2[h2]=lt;
 		printf("%s\n",c+1);
-		if (!(lt&((1<<20)-1))) cerr<<lt<<endl;
-		if (lt==(1<<23)){
+		if (!(cnt&((1<<20)-1))) cerr<<cnt<<endl;
+		if (cnt==(1<<23)){
 			freopen("result.out","w",stdout);
 			printf("-1\n");
 			fclose(stdout);
-			exit(-1);
+			exit(233);
 		}
 	}
 	fclose(stdout);
-	cerr<<"----"<<flag<<' '<<lt<<endl;
+	cerr<<"----"<<flag<<' '<<cnt<<endl;
 	freopen("tmp","r",stdin);
 	for (int i=1;i<=flag;++i) scanf("%s",tmp);
 	fclose(stdin);
 	freopen("result.out","w",stdout);
-	printf("%s\n%s\n",tmp,c+1);
+	printf("2\n/%s\n/%s\n",tmp,c+1);
 	fclose(stdout);
-//	nowlen=1<<10;
-//	tmp[1]='1';
-//	for (int i=1;i<=nowlen;i<<=1){
-//		for (int j=1;j<=i;++j) c[j]=tmp[j],tmp[j+i]=c[j]^1;
-//		cout<<c+1<<endl;
-//	}
-//	cout<<getHash()<<endl;
-//	for (int i=1;i<=nowlen;++i) c[i]^=1;
-//	cout<<getHash()<<endl;
-//	cout<<c+1;
 	return 0;
 }
